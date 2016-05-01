@@ -27,15 +27,16 @@ var map = new mapboxgl.Map({
 mapboxgl.datadriven(map, {
   source: {
     type: 'vector',
-    url: 'mapbox://devseed.a3na3brz'
+    url: 'mapbox://devseed.0z6wkh02'
   },
   'source-layer': 'osm',
   paint: {
-    'fill-color': '#ff8800'
+    'fill-color': '#ff8800',
+    'fill-outline-color': '#ff8800'
   },
   styleProperty: 'fill-opacity',
   styleFunction: {
-    property: 'roads_km',
+    property: 'road_density',
     stops: [
       [0, 0],
       [2, 0.25],
