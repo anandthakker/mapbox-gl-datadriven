@@ -6,11 +6,14 @@
     "docs-readme": "documentation readme -s API",
     "docs-check": "documentation readme -s API -c",
     "test": "npm run retire && npm run lint && npm run docs-check && tap --cov test/*.js",
-    "prepublish": "npm run docs-readme"
+    "prepublish": "npm run docs readme",
+    "start": "budo index.js:dist/mapbox-gl-datadriven.js -- --standalone mapboxgl.datadriven",
+    "bundle": "browserify --standalone mapboxgl.datadriven > dist/mapbox-gl-datadriven.js"
   },
   "devDependencies": {
-    "documentation": "^2.1.0-alpha2",
-    "documentation-readme": "^2.0.0",
+    "browserify": "^13.0.0",
+    "budo": "^8.2.2",
+    "documentation": "^4.0.0-beta2",
     "eslint": "^2.8.0",
     "eslint-config-standard": "^4.4.0",
     "eslint-plugin-promise": "^1.1.0",
@@ -18,7 +21,5 @@
     "retire": "*",
     "tap": "^2.1.1"
   },
-  "dependencies": {
-    "documentation": "^4.0.0-beta2"
-  }
+  "dependencies": {}
 }
