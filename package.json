@@ -11,7 +11,7 @@
     "test": "npm run retire && npm run lint && npm run docs-check && tap --cov test/*.js",
     "prepublish": "npm run docs readme",
     "start": "budo index.js:dist/mapbox-gl-datadriven.js -- --standalone mapboxgl.datadriven",
-    "bundle": "browserify --standalone mapboxgl.datadriven > dist/mapbox-gl-datadriven.js"
+    "bundle": "browserify index.js --standalone mapboxgl.datadriven > dist/mapbox-gl-datadriven.js"
   },
   "devDependencies": {
     "browserify": "^13.0.0",
