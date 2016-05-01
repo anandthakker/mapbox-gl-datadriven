@@ -2,6 +2,21 @@
 
 module.exports = datadriven
 
+/**
+ * Add layers that mimic 'data-driven' style properties for Mapbox GL JS.
+ *
+ * @param {Map} map The mapbox-gl-js map instance
+ * @param {object} options
+ * @param {object|string} options.source The source id or source definition object
+ * @param {string} [options.source-layer] The source layer to use -- needed for vector layers.
+ * @param {string} [options.prefix] Prefix to use for source and style-layer ids that are created.
+ * @param {string} options.styleProperty The paint property to style based on data values.
+ * @param {object} options.styleFunction A "style function" object defining the data-value -> paint-property-value mapping.
+ * @param {string} options.styleFunction.property The data property to use.
+ * @param {Array} options.styleFunction.stops The "stops" for the style function; each item is an array of [datavalue, stylevalue].
+ * @param {object} [options.layout] Common layout properties
+ * @param {object} [options.paint] Common paint properties
+ */
 function datadriven (map, options) {
   ensureStyle(map, function () {
     var source = options.source

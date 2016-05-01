@@ -1,55 +1,55 @@
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
-A skeleton JavaScript project using a common toolset
+A stopgap to mimic [data-driven styles in mapbox-gl-js](https://github.com/mapbox/mapbox-gl-js/pull/1932); hopefully obsolete very soon!
 
-## Features
+## Install
 
--   [eslint](http://eslint.org/) is used to keep code clean
--   [tap](https://www.npmjs.com/package/tap) is used for testing and code coverage
--   [retire](https://blog.liftsecurity.io/2014/11/19/bower-components-with-known-vulnerabilities) is used to check for vulnerable modules
--   [documentation.js](http://documentation.js.org/) is used to generate documentation
+    npm install mapbox-gl-datadriven
 
 ## Usage
 
-    git clone https://github.com/mapbox/jsskel.git
-    mv jsskel <project name>
-    cd <project name>
-    npm init
-    # Fill in the details
-    git remote set-url origin <your project URL>
+```js
+mapboxgl.datadriven(map, {
+  source: {
+    type: 'vector',
+    url: 'mapbox://user/tileset'
+  },
+  'source-layer': 'my-layer',
+  paint: {
+    'fill-color': '#ff8800'
+  },
+  styleProperty: 'fill-opacity',
+  styleFunction: {
+    property: 'my-property',
+    stops: [
+      [0, 0],
+      [10, 0.25],
+      [30, 0.5],
+      [100, 0.75],
+      [300, 1]
+    ]
+  }
+})
+```
 
-The following npm scripts are provided by package.json:
-
--   `npm run retire`: Check for vulnerable modules (run automatically as part of `npm test`)
--   `npm run lint`: Run linting (run automatically as part of `npm test`)
--   `npm run docs-page`: Generate documentation from JSDoc comments. You should check in the resulting output, which is set up assuming you'll be publishing to GitHub pages.
--   `npm run docs-readme`: Generate documentation from JSDoc comments, and inject them into the README (this file), replacing the `## API` section.
-
-Feel free to adjust any of the defaults to taste after creating a new module.
+See also [example.html](https://anandthakker.github.com/mapbox-gl-datadriven/example.html).
 
 ## API
 
-### square
+### datadriven
 
-Documentation for this function.
-
+Add layers that mimic 'data-driven' style properties for Mapbox GL JS.
 
 **Parameters**
 
--   `x` **number** an input
-
-
-
-**Examples**
-
-```javascript
-var square = require('square')
-square(5)
-```
-
-
-
-Returns **number** the output
-
-
-
+-   `map` **[Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)** The mapbox-gl-js map instance
+-   `options.paint` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)=** Common paint properties
+-   `options.source` **([object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)\|[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String))** The source id or source definition object
+-   `options.source-layer` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)=** The source layer to use -- needed for vector layers.
+-   `options.prefix` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)=** Prefix to use for source and style-layer ids that are created.
+-   `options` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** 
+    -   `options.styleFunction` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** A "style function" object defining the data-value -> paint-property-value mapping.
+        -   `options.styleFunction.property` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** The data property to use.
+        -   `options.styleFunction.stops` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)** The "stops" for the style function; each item is an array of [datavalue, stylevalue].
+    -   `options.layout` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)=** Common layout properties
+    -   `options.styleProperty` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** The paint property to style based on data values.

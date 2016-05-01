@@ -16,18 +16,18 @@
 
 <div id='map'></div>
 <script>
-mapboxgl.accessToken = 'pk.eyJ1IjoiZGV2c2VlZCIsImEiOiJnUi1mbkVvIn0.018aLhX0Mb0tdtaT2QNe2Q';
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGV2c2VlZCIsImEiOiJjaW4wOW1taTkwN3c5d2tsdXg3aXRrMjZhIn0.QpBLQwr3XzYs6xh6b8hbcQ';
 var map = new mapboxgl.Map({
     container: 'map', // container id
     style: 'mapbox://styles/mapbox/streets-v8', //stylesheet location
-    center: [-74.50, 40], // starting position
-    zoom: 9 // starting zoom
+    center: [-77.0560, 38.8862], // starting position
+    zoom: 11 // starting zoom
 });
 
 mapboxgl.datadriven(map, {
   source: {
     type: 'vector',
-    url: 'http://localhost:8080/index.json'
+    url: 'mapbox://devseed.a3na3brz'
   },
   'source-layer': 'osm',
   paint: {

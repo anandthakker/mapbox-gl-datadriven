@@ -1,4 +1,7 @@
 {
+  "name": "mapbox-gl-datadriven",
+  "description": "A stopgap to mimic data-driven styles in mapbox-gl-js; hopefully obsolete very soon!",
+  "keywords": ["mapbox", "mapbox-gl", "mapbox-gl-js", "data", "data-driven", "plugin"],
   "main": "index.js",
   "scripts": {
     "retire": "retire -p",
