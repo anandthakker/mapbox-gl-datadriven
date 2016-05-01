@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title></title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.18.0/mapbox-gl.js'></script>
+    <script src='dist/mapbox-gl-datadriven.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.18.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+
+<div id='map'></div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGV2c2VlZCIsImEiOiJjaW4wOW1taTkwN3c5d2tsdXg3aXRrMjZhIn0.QpBLQwr3XzYs6xh6b8hbcQ';
+var map = new mapboxgl.Map({
+    container: 'map', // container id
+    style: 'mapbox://styles/mapbox/streets-v8', //stylesheet location
+    center: [-77.0560, 38.8862], // starting position
+    zoom: 11 // starting zoom
+});
+
+mapboxgl.datadriven(map, {
+  source: {
+    type: 'vector',
+    url: 'mapbox://devseed.0z6wkh02'
+  },
+  'source-layer': 'osm',
+  paint: {
+    'fill-color': '#ff8800',
+    'fill-outline-color': '#ff8800'
+  },
+  styleProperty: 'fill-opacity',
+  styleFunction: {
+    type: 'relative',
+    property: 'road_density',
+    stops: [
+      [0, 0],
+      [0.2, 0.2],
+      [0.4, 0.4],
+      [0.8, 0.8],
+      [0.99, 0.95]
+    ]
+  }
+})
+
+</script>
+
+</body>
+</html>
