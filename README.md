@@ -32,24 +32,34 @@ mapboxgl.datadriven(map, {
 })
 ```
 
-See also [example.html](https://anandthakker.github.com/mapbox-gl-datadriven/example.html).
+See also [example.html](https://anandthakker.github.com/mapbox-gl-datadriven/example.html)
+and [example-relative.html](https://anandthakker.github.com/mapbox-gl-datadriven/example.html).
 
 ## API
 
 ### datadriven
 
 Add layers that mimic 'data-driven' style properties for Mapbox GL JS.
+Access with `require('mapbox-gl-datadriven')` or `mapboxgl.datadriven`.
 
 **Parameters**
 
 -   `map` **[Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)** The mapbox-gl-js map instance
--   `options.paint` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)=** Common paint properties
--   `options.source` **([object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)\|[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String))** The source id or source definition object
--   `options.source-layer` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)=** The source layer to use -- needed for vector layers.
--   `options.prefix` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)=** Prefix to use for source and style-layer ids that are created.
 -   `options` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** 
-    -   `options.styleFunction` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** A "style function" object defining the data-value -> paint-property-value mapping.
-        -   `options.styleFunction.property` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** The data property to use.
-        -   `options.styleFunction.stops` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)** The "stops" for the style function; each item is an array of [datavalue, stylevalue].
-    -   `options.layout` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)=** Common layout properties
+    -   `options.source` **([object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)\|[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String))** The source id or source definition object
+    -   `options.source-layer` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)=** The source layer to use -- needed for vector layers.
+    -   `options.prefix` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)=** Prefix to use for source and style-layer ids that are created.
     -   `options.styleProperty` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** The paint property to style based on data values.
+    -   `options.styleFunction` **StyleFunction** A "style function" object defining the data-value -> paint-property-value mapping.
+    -   `options.layout` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)=** Common layout properties
+    -   `options.paint` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)=** Common paint properties
+
+### StyleFunction
+
+**Properties**
+
+-   `property` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** The data property to use.
+-   `stops` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)** The "stops" for the style function; each item is an array of [datavalue, stylevalue].
+-   `type` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** Function type. Controls how data values are mapped to style values:-   Default: a simple step function -- data values between `stops[i][0]` (inclusive) and `stops[i+1][0]` are mapped to style value `stops[i][1]`.
+    -   `'relative'`: Same as default, but data values in `stops` are interpreted as percentiles (between 0 and 1), and the style values are re-scaled on map move to be relative to the data that's on the screen.
+    -   `'categorical'`: TBD

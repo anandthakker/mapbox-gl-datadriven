@@ -17,7 +17,7 @@
     "docs-readme": "documentation readme -s API",
     "docs-check": "documentation readme -s API -c",
     "test": "npm run retire && npm run lint && npm run docs-check && tap --cov test/*.js",
-    "prepublish": "npm run docs-readme",
+    "prepublish": "npm run bundle && npm run docs-readme",
     "start": "budo index.js:dist/mapbox-gl-datadriven.js -- --standalone mapboxgl.datadriven",
     "bundle": "browserify index.js --standalone mapboxgl.datadriven > dist/mapbox-gl-datadriven.js"
   },

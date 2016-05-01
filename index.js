@@ -6,6 +6,7 @@ module.exports = datadriven
 
 /**
  * Add layers that mimic 'data-driven' style properties for Mapbox GL JS.
+ * Access with `require('mapbox-gl-datadriven')` or `mapboxgl.datadriven`.
  *
  * @param {Map} map The mapbox-gl-js map instance
  * @param {object} options
@@ -13,9 +14,7 @@ module.exports = datadriven
  * @param {string} [options.source-layer] The source layer to use -- needed for vector layers.
  * @param {string} [options.prefix] Prefix to use for source and style-layer ids that are created.
  * @param {string} options.styleProperty The paint property to style based on data values.
- * @param {object} options.styleFunction A "style function" object defining the data-value -> paint-property-value mapping.
- * @param {string} options.styleFunction.property The data property to use.
- * @param {Array} options.styleFunction.stops The "stops" for the style function; each item is an array of [datavalue, stylevalue].
+ * @param {StyleFunction} options.styleFunction A "style function" object defining the data-value -> paint-property-value mapping.
  * @param {object} [options.layout] Common layout properties
  * @param {object} [options.paint] Common paint properties
  */
@@ -83,9 +82,14 @@ function datadriven (map, options) {
 
   function getFilter (i) {
     var filter = [ 'all' ]
-    filter.push([ '>=', styleFunction.property, styleFunction.stops[i][0] ])
-    if (i < styleFunction.stops.length - 1) {
-      filter.push([ '<', styleFunction.property, styleFunction.stops[i + 1][0] ])
+    if (styleFunction.type === 'categorical') {
+      var op = Array.isArray(styleFunction.stops[i][0]) ? 'in' : '=='
+      filter.push([ op, styleFunction.property, styleFunction.stops[i][0] ])
+    } else {
+      filter.push([ '>=', styleFunction.property, styleFunction.stops[i][0] ])
+      if (i < styleFunction.stops.length - 1) {
+        filter.push([ '<', styleFunction.property, styleFunction.stops[i + 1][0] ])
+      }
     }
     if (options.filter) { filter.push(options.filter) }
     return filter
@@ -118,3 +122,14 @@ function ensureStyle (map, cb) {
     map.once('style.load', cb)
   }
 }
+
+/**
+ * @typedef {object} StyleFunction
+ * @property {string} property The data property to use.
+ * @property {Array} stops The "stops" for the style function; each item is an array of [datavalue, stylevalue].
+ * @property {string} type Function type. Controls how data values are mapped to style values:
+ - Default: a simple step function -- data values between `stops[i][0]` (inclusive) and `stops[i+1][0]` are mapped to style value `stops[i][1]`.
+ - `'relative'`: Same as default, but data values in `stops` are interpreted as percentiles (between 0 and 1), and the style values are re-scaled on map move to be relative to the data that's on the screen.
+ - `'categorical'`: `stops` define specific categorical values rather than ranges: `stops[i][0]` must directly match (if it's primitive) or contain (if it's an array) the feature property value.
+ */
+
