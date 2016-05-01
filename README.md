@@ -54,6 +54,8 @@ Access with `require('mapbox-gl-datadriven')` or `mapboxgl.datadriven`.
     -   `options.layout` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)=** Common layout properties
     -   `options.paint` **[object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)=** Common paint properties
 
+Returns **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array).&lt;[String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)>** List of layers constituting the data-driven style that was created/added
+
 ### StyleFunction
 
 **Properties**
