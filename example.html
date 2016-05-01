@@ -24,7 +24,7 @@ var map = new mapboxgl.Map({
     zoom: 11 // starting zoom
 });
 
-mapboxgl.datadriven(map, {
+var layers = mapboxgl.datadriven(map, {
   source: {
     type: 'vector',
     url: 'mapbox://devseed.0z6wkh02'
@@ -46,6 +46,8 @@ mapboxgl.datadriven(map, {
     ]
   }
 })
+
+console.log(layers)
 
 </script>
 

@@ -17,32 +17,36 @@ module.exports = datadriven
  * @param {StyleFunction} options.styleFunction A "style function" object defining the data-value -> paint-property-value mapping.
  * @param {object} [options.layout] Common layout properties
  * @param {object} [options.paint] Common paint properties
+ *
+ * @returns {Array<String>} List of layers constituting the data-driven style that was created/added
  */
 function datadriven (map, options) {
   var source = options.source
   var styleFunction = options.styleFunction
   var stopDataValues = styleFunction.stops.map(function (s) { return s[0] })
-  ensureStyle(map, function () {
-    if (typeof source === 'object') {
-      source = unique(map, options.prefix)
-      map.addSource(source, options.source)
+
+  if (typeof source === 'object') {
+    source = options.prefix || 'mapbox-gl-datadriven'
+  }
+
+  var layers = styleFunction.stops.map(function (stop, i) {
+    var styleValue = stop[1]
+    var paint = {}
+    paint[options.styleProperty] = styleValue
+    return {
+      id: source + '-' + i,
+      source: source,
+      'source-layer': options['source-layer'],
+      type: 'fill',
+      layout: Object.assign({}, options.layout),
+      paint: Object.assign(paint, options.paint),
+      filter: getFilter(options.filter, styleFunction, i)
     }
+  })
 
-    styleFunction.stops.forEach(function (stop, i) {
-      var styleValue = stop[1]
-      var paint = {}
-      paint[options.styleProperty] = styleValue
-      map.addLayer({
-        id: source + '-' + i,
-        source: source,
-        'source-layer': options['source-layer'],
-        type: 'fill',
-        layout: Object.assign({}, options.layout),
-        paint: Object.assign(paint, options.paint),
-        filter: getFilter(i)
-      })
-    })
-
+  ensureStyle(map, function () {
+    if (typeof options.source === 'object') { map.addSource(source, options.source) }
+    layers.forEach(function (layer) { map.addLayer(layer) })
     // add a dummy layer that ensures the source data gets loaded
     map.addLayer({
       id: source + '-dummy',
@@ -60,6 +64,8 @@ function datadriven (map, options) {
     }
   })
 
+  return layers.map(function (layer) { return layer.id })
+
   function updateScale () {
     var data = map.querySourceFeatures(source, {
       sourceLayer: options['source-layer'],
@@ -74,25 +80,10 @@ function datadriven (map, options) {
     })
 
     stopDataValues.forEach(function (_, i) {
-      map.setFilter(source + '-' + i, getFilter(i))
+      map.setFilter(source + '-' + i, getFilter(options.filter, styleFunction, i))
     })
 
     console.log('updated dds', styleFunction)
-  }
-
-  function getFilter (i) {
-    var filter = [ 'all' ]
-    if (styleFunction.type === 'categorical') {
-      var op = Array.isArray(styleFunction.stops[i][0]) ? 'in' : '=='
-      filter.push([ op, styleFunction.property, styleFunction.stops[i][0] ])
-    } else {
-      filter.push([ '>=', styleFunction.property, styleFunction.stops[i][0] ])
-      if (i < styleFunction.stops.length - 1) {
-        filter.push([ '<', styleFunction.property, styleFunction.stops[i + 1][0] ])
-      }
-    }
-    if (options.filter) { filter.push(options.filter) }
-    return filter
   }
 
   function onDataReady (cb) {
@@ -106,21 +97,27 @@ function datadriven (map, options) {
   }
 }
 
-function unique (map, prefix) {
-  var baseId = prefix || 'datadriven'
-  var id = baseId
-  while (map.getSource(id) || map.getLayer(id)) {
-    id = baseId + '-' + Math.random().toFixed(4).slice(2)
-  }
-  return id
-}
-
 function ensureStyle (map, cb) {
   if (map.loaded()) {
     cb()
   } else {
     map.once('style.load', cb)
   }
+}
+
+function getFilter (prevFilter, styleFunction, i) {
+  var filter = [ 'all' ]
+  if (styleFunction.type === 'categorical') {
+    var op = Array.isArray(styleFunction.stops[i][0]) ? 'in' : '=='
+    filter.push([ op, styleFunction.property, styleFunction.stops[i][0] ])
+  } else {
+    filter.push([ '>=', styleFunction.property, styleFunction.stops[i][0] ])
+    if (i < styleFunction.stops.length - 1) {
+      filter.push([ '<', styleFunction.property, styleFunction.stops[i + 1][0] ])
+    }
+  }
+  if (prevFilter) { filter.push(prevFilter) }
+  return filter
 }
 
 /**
