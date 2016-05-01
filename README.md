@@ -62,4 +62,4 @@ Access with `require('mapbox-gl-datadriven')` or `mapboxgl.datadriven`.
 -   `stops` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)** The "stops" for the style function; each item is an array of [datavalue, stylevalue].
 -   `type` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** Function type. Controls how data values are mapped to style values:-   Default: a simple step function -- data values between `stops[i][0]` (inclusive) and `stops[i+1][0]` are mapped to style value `stops[i][1]`.
     -   `'relative'`: Same as default, but data values in `stops` are interpreted as percentiles (between 0 and 1), and the style values are re-scaled on map move to be relative to the data that's on the screen.
-    -   `'categorical'`: TBD
+    -   `'categorical'`: `stops` define specific categorical values rather than ranges: `stops[i][0]` must directly match (if it's primitive) or contain (if it's an array) the feature property value.
