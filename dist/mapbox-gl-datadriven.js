@@ -1,7 +1,49 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}(g.mapboxgl || (g.mapboxgl = {})).datadriven = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var getFilter = require('./get-filter')
+module.exports = function (options) {
+  var styleFunction = options.styleFunction
+  var layers = styleFunction.stops.map(function (stop, i) {
+    var styleValue = stop[1]
+    var paint = {}
+    paint[options.styleProperty] = styleValue
+    return {
+      id: options.source + '-' + i,
+      source: options.source,
+      'source-layer': options['source-layer'],
+      type: 'fill',
+      layout: Object.assign({}, options.layout),
+      paint: Object.assign(paint, options.paint),
+      filter: getFilter(options.filter, styleFunction, i)
+    }
+  })
+  return layers
+}
+
+},{"./get-filter":2}],2:[function(require,module,exports){
+
+module.exports = getFilter
+function getFilter (prevFilter, styleFunction, i) {
+  var filter = [ 'all' ]
+  if (styleFunction.type === 'categorical') {
+    var op = Array.isArray(styleFunction.stops[i][0]) ? 'in' : '=='
+    filter.push([ op, styleFunction.property, styleFunction.stops[i][0] ])
+  } else {
+    filter.push([ '>=', styleFunction.property, styleFunction.stops[i][0] ])
+    if (i < styleFunction.stops.length - 1) {
+      filter.push([ '<', styleFunction.property, styleFunction.stops[i + 1][0] ])
+    }
+  }
+  if (prevFilter) { filter.push(prevFilter) }
+  return filter
+}
+
+
+},{}],3:[function(require,module,exports){
 'use strict'
 
 var d3array = require('d3-array')
+var createLayerStack = require('./create-layer-stack')
+var getFilter = require('./get-filter')
 
 module.exports = datadriven
 
@@ -30,20 +72,7 @@ function datadriven (map, options) {
     source = options.prefix || 'mapbox-gl-datadriven'
   }
 
-  var layers = styleFunction.stops.map(function (stop, i) {
-    var styleValue = stop[1]
-    var paint = {}
-    paint[options.styleProperty] = styleValue
-    return {
-      id: source + '-' + i,
-      source: source,
-      'source-layer': options['source-layer'],
-      type: 'fill',
-      layout: Object.assign({}, options.layout),
-      paint: Object.assign(paint, options.paint),
-      filter: getFilter(options.filter, styleFunction, i)
-    }
-  })
+  var layers = createLayerStack(Object.assign({source: source}, options))
 
   ensureStyle(map, function () {
     if (typeof options.source === 'object') { map.addSource(source, options.source) }
@@ -106,21 +135,6 @@ function ensureStyle (map, cb) {
   }
 }
 
-function getFilter (prevFilter, styleFunction, i) {
-  var filter = [ 'all' ]
-  if (styleFunction.type === 'categorical') {
-    var op = Array.isArray(styleFunction.stops[i][0]) ? 'in' : '=='
-    filter.push([ op, styleFunction.property, styleFunction.stops[i][0] ])
-  } else {
-    filter.push([ '>=', styleFunction.property, styleFunction.stops[i][0] ])
-    if (i < styleFunction.stops.length - 1) {
-      filter.push([ '<', styleFunction.property, styleFunction.stops[i + 1][0] ])
-    }
-  }
-  if (prevFilter) { filter.push(prevFilter) }
-  return filter
-}
-
 /**
  * @typedef {object} StyleFunction
  * @property {string} property The data property to use.
@@ -132,7 +146,7 @@ function getFilter (prevFilter, styleFunction, i) {
  */
 
 
-},{"d3-array":2}],2:[function(require,module,exports){
+},{"./create-layer-stack":1,"./get-filter":2,"d3-array":4}],4:[function(require,module,exports){
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -602,5 +616,5 @@ function getFilter (prevFilter, styleFunction, i) {
   exports.zip = zip;
 
 }));
-},{}]},{},[1])(1)
+},{}]},{},[3])(3)
 });

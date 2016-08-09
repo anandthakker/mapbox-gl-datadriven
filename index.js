@@ -1,6 +1,8 @@
 'use strict'
 
 var d3array = require('d3-array')
+var createLayerStack = require('./create-layer-stack')
+var getFilter = require('./get-filter')
 
 module.exports = datadriven
 
@@ -29,20 +31,7 @@ function datadriven (map, options) {
     source = options.prefix || 'mapbox-gl-datadriven'
   }
 
-  var layers = styleFunction.stops.map(function (stop, i) {
-    var styleValue = stop[1]
-    var paint = {}
-    paint[options.styleProperty] = styleValue
-    return {
-      id: source + '-' + i,
-      source: source,
-      'source-layer': options['source-layer'],
-      type: 'fill',
-      layout: Object.assign({}, options.layout),
-      paint: Object.assign(paint, options.paint),
-      filter: getFilter(options.filter, styleFunction, i)
-    }
-  })
+  var layers = createLayerStack(Object.assign({source: source}, options))
 
   ensureStyle(map, function () {
     if (typeof options.source === 'object') { map.addSource(source, options.source) }
@@ -103,21 +92,6 @@ function ensureStyle (map, cb) {
   } else {
     map.once('style.load', cb)
   }
-}
-
-function getFilter (prevFilter, styleFunction, i) {
-  var filter = [ 'all' ]
-  if (styleFunction.type === 'categorical') {
-    var op = Array.isArray(styleFunction.stops[i][0]) ? 'in' : '=='
-    filter.push([ op, styleFunction.property, styleFunction.stops[i][0] ])
-  } else {
-    filter.push([ '>=', styleFunction.property, styleFunction.stops[i][0] ])
-    if (i < styleFunction.stops.length - 1) {
-      filter.push([ '<', styleFunction.property, styleFunction.stops[i + 1][0] ])
-    }
-  }
-  if (prevFilter) { filter.push(prevFilter) }
-  return filter
 }
 
 /**
