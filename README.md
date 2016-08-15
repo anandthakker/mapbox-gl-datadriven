@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/anandthakker/mapbox-gl-datadriven.svg?style=svg)](https://circleci.com/gh/anandthakker/mapbox-gl-datadriven)
+
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
 A stopgap to mimic [data-driven styles in mapbox-gl-js](https://github.com/mapbox/mapbox-gl-js/pull/1932); hopefully obsolete very soon!
