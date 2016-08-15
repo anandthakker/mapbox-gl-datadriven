@@ -1,33 +1,31 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}(g.mapboxgl || (g.mapboxgl = {})).datadriven = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var getFilter = require('./get-filter')
-module.exports = function (options) {
-  var styleFunction = options.styleFunction
-  var layers = styleFunction.stops.map(function (stop, i) {
-    var styleValue = stop[1]
-    var paint = {}
-    paint[options.styleProperty] = styleValue
-    return {
-      id: options.source + '-' + i,
-      source: options.source,
-      'source-layer': options['source-layer'],
-      type: 'fill',
-      layout: Object.assign({}, options.layout),
-      paint: Object.assign(paint, options.paint),
-      filter: getFilter(options.filter, styleFunction, i)
-    }
-  })
-  return layers
-}
 
-},{"./get-filter":2}],2:[function(require,module,exports){
-
-module.exports = getFilter
-function getFilter (prevFilter, styleFunction, i) {
+module.exports = createDDSFilter
+/**
+ * Creates a style `filter` to make a layer mimic one level/stop of a
+ * data-driven style.
+ *
+ * @param {object} prevFilter The layer's existing filter, if it exists.  If provided, the returned filter will be combined with this one.
+ * @param {StyleFunction} styleFunction The style function for which data-driven should be mimicked.
+ * @param {number} i The zero-based index of the level/stop to use.
+ * @returns {Array} A mapbox-gl style filter.
+ *
+ * @example
+ * var createDDSFilter = require('mapbox-gl-datadriven/create-dds-filter')
+ * var filter = createDDSFilter(null, {property: 'foo', stops: [[0, 'red'], [1, 'blue'], [2, 'green']]}, 2)
+ * console.log(filter)
+ * // outputs: ['all', ['foo', '>=', 2]]
+ */
+function createDDSFilter (prevFilter, styleFunction, i) {
   var filter = [ 'all' ]
   if (styleFunction.type === 'categorical') {
-    var op = Array.isArray(styleFunction.stops[i][0]) ? 'in' : '=='
-    filter.push([ op, styleFunction.property, styleFunction.stops[i][0] ])
+    if (Array.isArray(styleFunction.stops[i][0])) {
+      filter.push(['in', styleFunction.property].concat(styleFunction.stops[i][0]))
+    } else {
+      filter.push(['==', styleFunction.property, styleFunction.stops[i][0]])
+    }
   } else {
+    // assume 'interval' type
     filter.push([ '>=', styleFunction.property, styleFunction.stops[i][0] ])
     if (i < styleFunction.stops.length - 1) {
       filter.push([ '<', styleFunction.property, styleFunction.stops[i + 1][0] ])
@@ -38,12 +36,95 @@ function getFilter (prevFilter, styleFunction, i) {
 }
 
 
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
+var createFilter = require('./create-dds-filter')
+module.exports = createLayerStack
+
+/**
+ * Creates a stack of layers that simulate a data-driven style.
+ *
+ * @param {object} options
+ * @param {StyleFunction} options.styleFunction The style function to mimic
+ * @param {string} options.styleProperty The property (e.g. fill-color) on which to apply the function.
+ * @param {string} [options.stylePropertyType='paint'] The type of the style property (paint or layout).
+ * @param {string} options.source The `source` for the created layers
+ * @param {string} options.source-layer The `source-layer` for the created layers
+ * @param {string} [options.prefix] A prefix for layer `id`s.  Defaults to [source, source-layer].join('-')
+ * @param {object} [options.layout] Layout properites to use in the created layers
+ * @param {object} [options.paint] Paint properties to use in the created layers
+ * @param {object} [options.filter] Filter to use in the craeted layers
+ *
+ * @returns {Array<object>} An array of layer definitions, suitable for adding to the map with `map.addLayer()`
+ *
+ * @example
+ * var createLayerStack = require('mapbox-gl-datadriven/create-layer-stack')
+ * var layers = createLayerStack({
+ *   styleFunction: {property: 'foo', stops: [[0, 'red'], [1, 'blue'], [2, 'green']]},
+ *   styleProperty: 'fill-color',
+ *   source: 'my-source',
+ *   'source-layer': 'my-layer',
+ *   paint: { 'fill-opacity': 0.5 }
+ * })
+ *
+ * // Output:
+ * [
+ *   {
+ *     "id": "my-source-0",
+ *     "type": "fill",
+ *     "layout": {},
+ *     "paint": { "fill-color": "red", "fill-opacity": 0.5 },
+ *     "filter": [ "all", [ ">=", "foo", 0 ], [ "<", "foo", 1 ] ]
+ *   },
+ *   {
+ *     "id": "undefined-1",
+ *     "type": "fill",
+ *     "layout": {},
+ *     "paint": { "fill-color": "blue", "fill-opacity": 0.5 },
+ *     "filter": [ "all", [ ">=", "foo", 1 ], [ "<", "foo", 2 ] ]
+ *   },
+ *   {
+ *     "id": "undefined-2",
+ *     "type": "fill",
+ *     "layout": {},
+ *     "paint": { "fill-color": "green", "fill-opacity": 0.5 },
+ *     "filter": [ "all", [ ">=", "foo", 2 ] ]
+ *   }
+ * ]
+ */
+function createLayerStack (options) {
+  var styleFunction = options.styleFunction
+  var layers = styleFunction.stops.map(function (stop, i) {
+    var layout = {}
+    var paint = {}
+    var styleValue = stop[1]
+    if (options.stylePropertyType === 'layout') {
+      layout[options.styleProperty] = styleValue
+    } else {
+      paint[options.styleProperty] = styleValue
+    }
+    var prefix = options.prefix
+    if (!prefix) {
+      prefix = [options.source, options['source-layer']].filter(Boolean).join('-')
+    }
+    return {
+      id: prefix + '-' + i,
+      source: options.source,
+      'source-layer': options['source-layer'],
+      type: options.type || 'fill',
+      layout: Object.assign(layout, options.layout),
+      paint: Object.assign(paint, options.paint),
+      filter: createFilter(options.filter, styleFunction, i)
+    }
+  })
+  return layers
+}
+
+},{"./create-dds-filter":1}],3:[function(require,module,exports){
 'use strict'
 
 var d3array = require('d3-array')
 var createLayerStack = require('./create-layer-stack')
-var getFilter = require('./get-filter')
+var createFilter = require('./create-dds-filter')
 
 module.exports = datadriven
 
@@ -72,14 +153,15 @@ function datadriven (map, options) {
     source = options.prefix || 'mapbox-gl-datadriven'
   }
 
-  var layers = createLayerStack(Object.assign({source: source}, options))
+  var prefix = options.prefix || (source + '-' + options['source-layer'])
+  var layers = createLayerStack(Object.assign({source: source}, options, {prefix: prefix}))
 
   ensureStyle(map, function () {
     if (typeof options.source === 'object') { map.addSource(source, options.source) }
     layers.forEach(function (layer) { map.addLayer(layer) })
     // add a dummy layer that ensures the source data gets loaded
     map.addLayer({
-      id: source + '-dummy',
+      id: prefix + '-dummy',
       source: source,
       'source-layer': options['source-layer'],
       type: 'fill',
@@ -110,7 +192,7 @@ function datadriven (map, options) {
     })
 
     stopDataValues.forEach(function (_, i) {
-      map.setFilter(source + '-' + i, getFilter(options.filter, styleFunction, i))
+      map.setFilter(prefix + '-' + i, createFilter(options.filter, styleFunction, i))
     })
 
     console.log('updated dds', styleFunction)
@@ -136,17 +218,19 @@ function ensureStyle (map, cb) {
 }
 
 /**
+ * A mapbox-gl style function.  See https://www.mapbox.com/mapbox-gl-style-spec/#types-function.
+ *
  * @typedef {object} StyleFunction
  * @property {string} property The data property to use.
- * @property {Array} stops The "stops" for the style function; each item is an array of [datavalue, stylevalue].
+ * @property {Array} stops The "stops" for the style function; each item is an array of [datavalue, stylevalue].  For a small performance improvement that's not needed or supported by "real" gl style functions, the `datavalue` for a categorical function may be an array of values.
  * @property {string} type Function type. Controls how data values are mapped to style values:
- - Default: a simple step function -- data values between `stops[i][0]` (inclusive) and `stops[i+1][0]` are mapped to style value `stops[i][1]`.
- - `'relative'`: Same as default, but data values in `stops` are interpreted as percentiles (between 0 and 1), and the style values are re-scaled on map move to be relative to the data that's on the screen.
+ - `'interval'` (default): a simple step function -- data values between `stops[i][0]` (inclusive) and `stops[i+1][0]` are mapped to style value `stops[i][1]`.
  - `'categorical'`: `stops` define specific categorical values rather than ranges: `stops[i][0]` must directly match (if it's primitive) or contain (if it's an array) the feature property value.
+ - `'relative'`: Like 'interval', but data values in `stops` are interpreted as percentiles (between 0 and 1), and the style values are re-scaled on map move to be relative to the data that's on the screen. (Note that this type is not a supported mapbox-gl style function type, and requires this plugin to do extra computations each time the map moves.)
  */
 
 
-},{"./create-layer-stack":1,"./get-filter":2,"d3-array":4}],4:[function(require,module,exports){
+},{"./create-dds-filter":1,"./create-layer-stack":2,"d3-array":4}],4:[function(require,module,exports){
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
