@@ -2,7 +2,7 @@
 
 var d3array = require('d3-array')
 var createLayerStack = require('./create-layer-stack')
-var getFilter = require('./get-filter')
+var createFilter = require('./create-dds-filter')
 
 module.exports = datadriven
 
@@ -31,14 +31,15 @@ function datadriven (map, options) {
     source = options.prefix || 'mapbox-gl-datadriven'
   }
 
-  var layers = createLayerStack(Object.assign({source: source}, options))
+  var prefix = options.prefix || (source + '-' + options['source-layer'])
+  var layers = createLayerStack(Object.assign({source: source}, options, {prefix: prefix}))
 
   ensureStyle(map, function () {
     if (typeof options.source === 'object') { map.addSource(source, options.source) }
     layers.forEach(function (layer) { map.addLayer(layer) })
     // add a dummy layer that ensures the source data gets loaded
     map.addLayer({
-      id: source + '-dummy',
+      id: prefix + '-dummy',
       source: source,
       'source-layer': options['source-layer'],
       type: 'fill',
@@ -69,7 +70,7 @@ function datadriven (map, options) {
     })
 
     stopDataValues.forEach(function (_, i) {
-      map.setFilter(source + '-' + i, getFilter(options.filter, styleFunction, i))
+      map.setFilter(prefix + '-' + i, createFilter(options.filter, styleFunction, i))
     })
 
     console.log('updated dds', styleFunction)
@@ -95,12 +96,14 @@ function ensureStyle (map, cb) {
 }
 
 /**
+ * A mapbox-gl style function.  See https://www.mapbox.com/mapbox-gl-style-spec/#types-function.
+ *
  * @typedef {object} StyleFunction
  * @property {string} property The data property to use.
- * @property {Array} stops The "stops" for the style function; each item is an array of [datavalue, stylevalue].
+ * @property {Array} stops The "stops" for the style function; each item is an array of [datavalue, stylevalue].  For a small performance improvement that's not needed or supported by "real" gl style functions, the `datavalue` for a categorical function may be an array of values.
  * @property {string} type Function type. Controls how data values are mapped to style values:
- - Default: a simple step function -- data values between `stops[i][0]` (inclusive) and `stops[i+1][0]` are mapped to style value `stops[i][1]`.
- - `'relative'`: Same as default, but data values in `stops` are interpreted as percentiles (between 0 and 1), and the style values are re-scaled on map move to be relative to the data that's on the screen.
+ - `'interval'` (default): a simple step function -- data values between `stops[i][0]` (inclusive) and `stops[i+1][0]` are mapped to style value `stops[i][1]`.
  - `'categorical'`: `stops` define specific categorical values rather than ranges: `stops[i][0]` must directly match (if it's primitive) or contain (if it's an array) the feature property value.
+ - `'relative'`: Like 'interval', but data values in `stops` are interpreted as percentiles (between 0 and 1), and the style values are re-scaled on map move to be relative to the data that's on the screen. (Note that this type is not a supported mapbox-gl style function type, and requires this plugin to do extra computations each time the map moves.)
  */
 
